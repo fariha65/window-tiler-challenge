@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-// Window ta screen er kon dike snap hote pare ta bole
+// Snap zone types
 type SnapPosition =
   | "left"
   | "right"
@@ -12,7 +12,7 @@ type SnapPosition =
   | "bottomright"
   | null;
 
-// Prottek window er data structure
+// Window data structure
 interface Window {
   id: number;
   position: { x: number; y: number };
@@ -21,11 +21,11 @@ interface Window {
   color: string;
 }
 
-// Random color banano function
+// Random color generator
 const randomColor = () =>
   `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
 
-// Random position banano screen size ar window size onujayi
+// Random position generator
 const randomPosition = (width: number, height: number) => {
   const screenWidth = window.innerWidth;
   const screenHeight = window.innerHeight;
@@ -35,7 +35,7 @@ const randomPosition = (width: number, height: number) => {
   };
 };
 
-// Snap zone gula define kora holo screen er relative part hisebe
+// Snap zones definition
 const SNAP_ZONES = [
   { name: "left", x: 0, y: 0, w: 0.5, h: 1 },
   { name: "right", x: 0.5, y: 0, w: 0.5, h: 1 },
@@ -48,58 +48,60 @@ const SNAP_ZONES = [
 ];
 
 const App: React.FC = () => {
-  // Sob window er data ekhane thakbe
   const [windows, setWindows] = useState<Window[]>([]);
-  // Je window drag hocche tar id ekhane thakbe
   const [draggingWindowId, setDraggingWindowId] = useState<number | null>(null);
-  // Mouse ar window er moddher distance (dragging somoy)
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  // Drag korle snap zones show korar jonno
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [showSnapZones, setShowSnapZones] = useState(false);
-  // Mouse kon snap zone er upor ase drag er somoy
   const [hoveredSnapZone, setHoveredSnapZone] = useState<SnapPosition>(null);
 
-  // Snap zone onujayi sob window gulo re-arrange korar function
+  // Arrange windows in a snap zone
   const arrangeWindows = (snapZone: SnapPosition, allWindows: Window[]) => {
-    // Je snap zone ta dibe oi info ber koro
     const zone = SNAP_ZONES.find((z) => z.name === snapZone);
     if (!zone) return allWindows;
 
-    // Oi snap zone e je window gulo ache tader list koro
     const snappedWindows = allWindows.filter((w) => w.snapPosition === snapZone);
     if (snappedWindows.length === 0) return allWindows;
 
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
 
-    // Snap zone er absolute position and size ber koro
     const zoneX = screenWidth * zone.x;
     const zoneY = screenHeight * zone.y;
     const zoneWidth = screenWidth * zone.w;
     const zoneHeight = screenHeight * zone.h;
 
-    // Sob window equal height pabe, width full zone er width
-    const eachHeight = zoneHeight / snappedWindows.length;
-    const eachWidth = zoneWidth;
+    // Sides: allow multiple windows, divide zone
+    let arranged: Window[];
+    if (["left", "right"].includes(snapZone || "")) {
+      const eachHeight = zoneHeight / snappedWindows.length;
+      arranged = snappedWindows.map((win, i) => ({
+        ...win,
+        position: { x: zoneX, y: zoneY + i * eachHeight },
+        size: { width: zoneWidth, height: eachHeight },
+      }));
+    } else if (["top", "bottom"].includes(snapZone || "")) {
+      const eachWidth = zoneWidth / snappedWindows.length;
+      arranged = snappedWindows.map((win, i) => ({
+        ...win,
+        position: { x: zoneX + i * eachWidth, y: zoneY },
+        size: { width: eachWidth, height: zoneHeight },
+      }));
+    } else {
+      // Corners: only one window per zone
+      arranged = snappedWindows.map((win) => ({
+        ...win,
+        position: { x: zoneX, y: zoneY },
+        size: { width: zoneWidth, height: zoneHeight },
+      }));
+    }
 
-    // Sob window er position o size update koro
-    const arranged = snappedWindows.map((win, i) => ({
-      ...win,
-      position: {
-        x: zoneX,
-        y: zoneY + i * eachHeight,
-      },
-      size: { width: eachWidth, height: eachHeight },
-    }));
-
-    // Sob window er updated list return koro
     return allWindows.map((w) => {
       const updatedWin = arranged.find((a) => a.id === w.id);
       return updatedWin || w;
     });
   };
 
-  // Notun window add korar function
+  // Add new window
   const addNewWindow = () => {
     const width = 200;
     const height = 150;
@@ -114,20 +116,17 @@ const App: React.FC = () => {
     setWindows([...windows, newWindow]);
   };
 
-  // Window close korar function
+  // Close window
   const closeWindow = (id: number) => {
-    // Agei jei window close kortesi ta ber koro
     const target = windows.find((w) => w.id === id);
-    // Je window close korbo sheta bad diye baki gulo rekhe dao
     let updatedWindows = windows.filter((w) => w.id !== id);
-    // Jodi oi window snap kora thake tahole snap layout abar update koro
     if (target?.snapPosition) {
       updatedWindows = arrangeWindows(target.snapPosition, updatedWindows);
     }
     setWindows(updatedWindows);
   };
 
-  // Drag start korar function (mouse down)
+  // Drag start
   const onDragStart = (e: React.MouseEvent, id: number) => {
     setDraggingWindowId(id);
     setShowSnapZones(true);
@@ -137,14 +136,12 @@ const App: React.FC = () => {
     }
   };
 
-  // Drag sesh korar function (mouse up)
+  // Drag end
   const onDragEnd = () => {
     if (draggingWindowId !== null && hoveredSnapZone) {
-      // Drag kora window ke snap zone e set koro
       let updated = windows.map((w) =>
         w.id === draggingWindowId ? { ...w, snapPosition: hoveredSnapZone } : w
       );
-      // Layout update koro snap zone onujayi
       updated = arrangeWindows(hoveredSnapZone, updated);
       setWindows(updated);
     }
@@ -153,7 +150,7 @@ const App: React.FC = () => {
     setHoveredSnapZone(null);
   };
 
-  // Mouse move function drag somoy window move korar jonno
+  // Mouse move during drag
   const onMouseMove = (e: React.MouseEvent) => {
     if (draggingWindowId === null) return;
 
@@ -161,7 +158,6 @@ const App: React.FC = () => {
     const screenW = window.innerWidth;
     const screenH = window.innerHeight;
 
-    // Mouse kothay ase (snap zone detect kora)
     let zone: SnapPosition = null;
     if (e.clientX < margin && e.clientY < margin) zone = "topleft";
     else if (e.clientX > screenW - margin && e.clientY < margin) zone = "topright";
@@ -174,7 +170,6 @@ const App: React.FC = () => {
 
     setHoveredSnapZone(zone);
 
-    // Jodi kono snap zone na thake tahole free move koro
     if (!zone) {
       const newX = e.clientX - dragOffset.x;
       const newY = e.clientY - dragOffset.y;
@@ -191,7 +186,7 @@ const App: React.FC = () => {
     }
   };
 
-  // Screen e snap zone gula highlight korar jonno div create kora hocche
+  // Render snap zones
   const renderSnapZones = () => {
     if (!showSnapZones) return null;
     const screenWidth = window.innerWidth;
@@ -225,7 +220,7 @@ const App: React.FC = () => {
     >
       {renderSnapZones()}
 
-      {/* Notun window add korar button */}
+      {/* Add window button */}
       <button
         onClick={addNewWindow}
         className="fixed bottom-6 right-6 px-4 py-2 bg-purple-600 text-white rounded shadow"
@@ -233,12 +228,11 @@ const App: React.FC = () => {
         +
       </button>
 
-      {/* Sob window render kora hocche */}
+      {/* Render windows */}
       {windows.map((win, i) => (
         <div
           key={win.id}
-          className="absolute border shadow-md"git remote add submission ssh://git@git.innovation-at-pathao.com:12004/submission_03eft3b2pjwi7197xcsa2mzh5_window-tiler.git
-
+          className="absolute border shadow-md"
           style={{
             left: win.position.x,
             top: win.position.y,
@@ -249,7 +243,7 @@ const App: React.FC = () => {
             transition: win.snapPosition ? "all 0.2s" : undefined,
           }}
         >
-          {/* Window er title bar jekhane drag o close button ache */}
+          {/* Window bar */}
           <div
             className="flex justify-between items-center px-2 py-1 bg-gray-800 text-white cursor-move"
             onMouseDown={(e) => onDragStart(e, win.id)}
@@ -262,8 +256,7 @@ const App: React.FC = () => {
               ×
             </button>
           </div>
-
-          {/* Window er content */}
+          {/* Window content */}
           <div className="p-2 text-lg">Node {i + 1}</div>
         </div>
       ))}
