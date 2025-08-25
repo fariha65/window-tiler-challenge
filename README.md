@@ -1,12 +1,12 @@
-# 🪟 Window Tiler Challenge
+# Window Tiler Challenge
 
-## 📌 Overview
+##  Overview
 The **Window Tiler** project is an interactive web application where users can drag, resize, and snap windows inside a workspace.  
 The main goal is to implement **drag interactivity** and handle **data structures** to manage multiple windows efficiently.
 
 ---
 
-## 🎯 Features
+##  Features
 - Drag and drop windows smoothly.
 - Snap windows to edges (left, right, top, bottom, corners).
 - Resizable window layout.
@@ -17,7 +17,7 @@ The main goal is to implement **drag interactivity** and handle **data structure
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 - **React + TypeScript** → Frontend logic and UI.
 - **TailwindCSS** → Styling and responsive design.
 - **Framer Motion** → Smooth animations.
@@ -25,7 +25,7 @@ The main goal is to implement **drag interactivity** and handle **data structure
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 ```
 
 window-tiler/
@@ -57,13 +57,13 @@ Now open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## 📸 Demo Preview
+##  Demo Preview
 
 Users can drag windows, snap them to different zones, and resize them dynamically.
 
 ---
 
-## 📖 How It Works
+##  How It Works
 
 1. Each window is represented as a data object:
 
