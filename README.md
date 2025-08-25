@@ -81,6 +81,5 @@ Users can drag windows, snap them to different zones, and resize them dynamicall
    * Data structure ensures uniqueness & prevents overlap.
    * Snap logic adjusts final position.
 
-
-Author
+## Author
 Fariha Afrin Tamanna
